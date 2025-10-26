@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tuition Fee Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f5f5f5;
+    }
+    h2 {
+      color: #333;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select {
+      width: 300px;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .refresh-btn {
+      background-color: #6c757d;
+    }
+    .refresh-btn:hover {
+      background-color: #5a6268;
+    }
+    .print-btn {
+      background-color: #28a745;
+    }
+    .print-btn:hover {
+      background-color: #218838;
+    }
+    .calculate-btn {
+      background-color: #007BFF;
+    }
+    .calculate-btn:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 30px;
+      border-collapse: collapse;
+      background-color: white;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Tuition Fee Calculator</h2>
+
+  <label for="program">Select Program:</label>
+  <select id="program">
+    <option value="ce">CE</option>
+    <option value="cse">CSE</option>
+    <option value="it">IT</option>
+    <option value="eee">EEE</option>
+    <option value="ece">ECE</option>
+    <option value="pharmacy">Pharmacy</option>
+    <option value="bba">BBA</option>
+    <option value="mba">MBA</option>
+    <option value="llb">LLB</option>
+    <option value="llm">LLM</option>
+    <option value="english">English</option>
+  </select>
+
+  <label for="gpa">Enter Total GPA (8.00 - 10.00):</label>
+  <input type="number" step="0.01" id="gpa" min="8" max="10">
+
+  <label for="golden">Is it Golden GPA?</label>
+  <select id="golden">
+    <option value="no">No</option>
+    <option value="yes">Yes</option>
+  </select>
+
+  <button onclick="calculateFee()" class="calculate-btn">Calculate</button>
+  <button onclick="location.reload()" class="refresh-btn">Refresh</button>
+  <button onclick="printResult()" class="print-btn">Print / Save as PDF</button>
+
+  <div id="result"></div>
+
+  <script>
+    const tuitionFees = {
+      ce: 505200,
+      cse: 568200,
+      it: 496200,
+      eee: 571000,
+      ece: 568200,
+      pharmacy: 589200,
+      bba: 480600,
+      mba: 166700,
+      llb: 525400,
+      llm: 114700,
+      english: 383200
+    };
+
+    const admissionFee = 16200;
+    const otherFee = 6000;
+
+    function getDiscount(gpa, isGolden) {
+      if (isGolden) return 50;
+      if (gpa >= 8 && gpa <= 8.49) return 10;
+      if (gpa >= 8.5 && gpa <= 8.99) return 15;
+      if (gpa >= 9 && gpa <= 9.49) return 20;
+      if (gpa >= 9.5 && gpa <= 9.99) return 30;
+      if (gpa >= 10) return 40;
+      return 0;
+    }
+
+    function calculateFee() {
+      const program = document.getElementById("program").value;
+      const gpa = parseFloat(document.getElementById("gpa").value);
+      const isGolden = document.getElementById("golden").value === "yes";
+
+      if (!tuitionFees.hasOwnProperty(program)) {
+        document.getElementById("result").innerHTML = "Invalid program selected.";
+        return;
+      }
+
+      if (isNaN(gpa) || gpa < 8 || gpa > 10) {
+        document.getElementById("result").innerHTML = "Invalid GPA. Please enter between 8.00 and 10.00.";
+        return;
+      }
+
+      const tuition = tuitionFees[program];
+      const discountPercent = getDiscount(gpa, isGolden);
+      const discountAmount = (discountPercent / 100) * tuition;
+      const totalFee = (tuition - discountAmount) + admissionFee + otherFee * 8;
+      const firstSemesterFee = Math.floor(totalFee / 8) + admissionFee + otherFee;
+      const firstInstallment = Math.floor((firstSemesterFee - admissionFee) / 3) + admissionFee;
+
+      const tableHTML = `
+        <table>
+          <tr><th>Item</th><th>Value</th></tr>
+          <tr><td>Selected Program</td><td>${program.toUpperCase()}</td></tr>
+          <tr><td>Original Tuition Fee</td><td>${tuition} BDT</td></tr>
+          <tr><td>GPA</td><td>${gpa.toFixed(2)}</td></tr>
+          <tr><td>Golden GPA</td><td>${isGolden ? "Yes" : "No"}</td></tr>
+          <tr><td>Discount %</td><td>${discountPercent}%</td></tr>
+          <tr><td>Discount Amount</td><td>${Math.floor(discountAmount)} BDT</td></tr>
+          <tr><td>Admission Fee</td><td>${admissionFee} BDT</td></tr>
+          <tr><td>Other's Fee per Semester</td><td>${otherFee} BDT</td></tr>
+          <tr><td>Total Payable Amount</td><td>${Math.floor(totalFee)} BDT</td></tr>
+          <tr><td>First Semester Total Fee</td><td>${Math.floor(firstSemesterFee)} BDT</td></tr>
+          <tr><td>First Installment Fee</td><td>${Math.floor(firstInstallment)} BDT</td></tr>
+        </table>
+      `;
+
+      document.getElementById("result").innerHTML = tableHTML;
+    }
+
+    function printResult() {
+      const resultContent = document.getElementById("result").innerHTML;
+      if (!resultContent.trim()) {
+        alert("Please calculate the fee first.");
+        return;
+      }
+      const printWindow = window.open('', '', 'height=600,width=800');
+      printWindow.document.write('<html><head><title>Print Tuition Fee Details</title>');
+      printWindow.document.write('<style>table {width: 100%; border-collapse: collapse;} th, td {border: 1px solid #ccc; padding: 10px; text-align: left;} th {background-color: #f0f0f0;} body {font-family: Arial, sans-serif; padding: 20px;}</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write('<h2>Tuition Fee Details</h2>');
+      printWindow.document.write(resultContent);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+  </script>
+
+</body>
+</html>
